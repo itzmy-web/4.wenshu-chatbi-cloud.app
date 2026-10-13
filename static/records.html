@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>问数 ChatBI · 查询记录</title>
+<style>
+  :root { --bg:#f4f5fb; --panel:#ffffff; --line:#e4e6f4; --text:#2b2b40; --muted:#8b8fa8; --accent:#7c3aed; --accent2:#6366f1; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif; color: var(--text);
+    background: linear-gradient(180deg, #f2f1fb 0%, #f4f5fb 60%);
+    height: 100vh; display: flex; flex-direction: row; position: relative; overflow: hidden;
+  }
+  .blob { position: fixed; border-radius: 50%; filter: blur(70px); pointer-events: none; z-index: 0; }
+  .blob.b1 { width: 420px; height: 420px; right: -120px; top: -140px; background: rgba(124,58,237,.14); }
+  .blob.b2 { width: 360px; height: 360px; left: 220px; bottom: -160px; background: rgba(99,102,241,.10); }
+  /* ---------- 左侧边栏（深紫 SaaS 风 · 全站统一） ---------- */
+  .sidebar {
+    flex: none; width: 218px; height: 100vh; z-index: 2;
+    display: flex; flex-direction: column;
+    border-right: none;
+    background: linear-gradient(180deg, #251d59 0%, #1b1543 60%, #161136 100%);
+    padding: 18px 12px;
+    overflow-y: auto;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .sidebar::-webkit-scrollbar { display: none; width: 0; }
+  .sb-brand { display: flex; align-items: center; gap: 11px; padding: 2px 6px 16px; border-bottom: 1px solid rgba(255,255,255,.10); margin-bottom: 14px; }
+  .sb-logo {
+    width: 42px; height: 42px; border-radius: 11px; flex: none;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    box-shadow: 0 5px 18px rgba(124,58,237,.55);
+  }
+  .sb-brand h1 { font-size: 16.5px; font-weight: 800; line-height: 1.2; color: #fff; }
+  .sb-brand p { font-size: 10px; color: #a5a0d6; letter-spacing: 1px; margin-top: 2px; }
+  .sb-menu { display: flex; flex-direction: column; gap: 3px; }
+  .sb-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    font-size: 13.5px; color: #b6b2dd; cursor: pointer;
+    border: 1px solid transparent;
+    transition: background .12s, color .12s;
+    position: relative;
+  }
+  .sb-item .ic { font-size: 15px; width: 20px; text-align: center; flex: none; }
+  .sb-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .sb-item.on {
+    background: linear-gradient(90deg, #4f6ef7, #6d5df6);
+    border-color: transparent;
+    color: #fff; font-weight: 700;
+    box-shadow: 0 6px 18px rgba(79,110,247,.45);
+  }
+  .sb-item.on::before {
+    content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+    width: 3.5px; border-radius: 4px;
+    background: linear-gradient(180deg, #a5b4fc, #e0e7ff);
+  }
+  .sb-badge {
+    margin-left: auto; min-width: 20px; text-align: center;
+    font-size: 10.5px; font-weight: 700;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: #fff; border-radius: 999px; padding: 2px 7px;
+  }
+  .sb-foot {
+    margin-top: auto; padding: 14px 8px 2px;
+    font-size: 10.5px; color: #7d78ad; line-height: 1.8;
+    border-top: 1px solid rgba(255,255,255,.10);
+  }
+  @media (max-width: 900px) {
+    .sidebar { width: 62px; padding: 14px 8px; }
+    .sb-brand { justify-content: center; padding-bottom: 12px; }
+    .sb-brand div:not(.sb-logo) { display: none; }
+    .sb-item { justify-content: center; padding: 11px 6px; }
+    .sb-item .txt, .sb-item .sb-badge, .sb-foot { display: none; }
+    .sb-item.on::before { top: 15%; bottom: 15%; }
+  }
+  /* ---------- 顶部栏（深紫 · 全站统一） ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 30; flex: none;
+    height: 54px; display: flex; align-items: center; gap: 14px;
+    padding: 0 22px;
+    background: linear-gradient(90deg, #2a2166 0%, #251d59 55%, #1e1748 100%);
+    color: #e6e3fa;
+    box-shadow: 0 2px 12px rgba(15,10,50,.35);
+  }
+  .tb-crumb { font-size: 12.5px; color: #a5a0d6; }
+  .tb-crumb b { color: #fff; font-size: 13.5px; margin-right: 8px; }
+  .tb-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .tb-bell { position: relative; font-size: 17px; cursor: default; }
+  .tb-bell::after {
+    content: ''; position: absolute; top: -2px; right: -4px;
+    width: 7px; height: 7px; border-radius: 50%; background: #f87171;
+  }
+  .tb-user { display: flex; align-items: center; gap: 9px; }
+  .tb-avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex: none;
+    background: linear-gradient(135deg, #8b5cf6, #4f6ef7);
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .tb-name { font-size: 12.5px; color: #d9d4f4; letter-spacing: .5px; }
+
+  /* ---------- 主区 ---------- */
+  .main-col { flex: 1; min-width: 0; height: 100vh; overflow-y: auto; padding: 20px 28px 30px; position: relative; z-index: 1; }
+  .main-col::-webkit-scrollbar { width: 8px; } .main-col::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  header { display: flex; align-items: center; gap: 14px; }
+  h1 { font-size: 21px; font-weight: 800; }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .meta { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .meta span { border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px; cursor: pointer; background: #fff; transition: .15s; }
+  .meta span:hover { color: #6d28d9; border-color: var(--accent); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .stat {
+    background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 3px 14px rgba(99,102,241,.08);
+  }
+  .stat .ic { width: 38px; height: 38px; border-radius: 11px; font-size: 18px; flex: none;
+              display: flex; align-items: center; justify-content: center;
+              background: linear-gradient(135deg, rgba(124,58,237,.16), rgba(99,102,241,.10));
+              border: 1px solid rgba(124,58,237,.28); }
+  .stat .v { font-size: 21px; font-weight: 800; background: linear-gradient(90deg, #7c3aed, #6366f1);
+             -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1.1; }
+  .stat .k { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .search { flex: 1; min-width: 180px; position: relative; }
+  .search input {
+    width: 100%; border: 1px solid var(--line); background: #fff; color: var(--text);
+    border-radius: 999px; padding: 9px 16px 9px 36px; font-size: 13px; outline: none; transition: .15s;
+  }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,58,237,.15); }
+  .search .sic { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 13px; pointer-events: none; }
+  .toolbtn {
+    border: 1px solid var(--line); background: #fff; color: #8b8fa8; border-radius: 999px;
+    padding: 8px 14px; font-size: 12px; cursor: pointer; white-space: nowrap; transition: .15s;
+  }
+  .toolbtn:hover { color: #2b2b40; border-color: var(--accent); }
+  .toolbtn.danger:hover { color: #d05656; border-color: #d05656; background: rgba(208,86,86,.06); }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+          box-shadow: 0 3px 14px rgba(99,102,241,.08); }
+  .item { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #eef0fa;
+          cursor: pointer; transition: .12s; position: relative; animation: fadeUp .25s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .item:hover { background: #f5f5fd; }
+  .item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; transition: .12s; }
+  .item:hover::before { background: linear-gradient(180deg, var(--accent), var(--accent2)); }
+  .item .no { width: 26px; height: 26px; border-radius: 8px; background: rgba(124,58,237,.12); color: #6d28d9;
+              font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none; }
+  .item .q { flex: 1; font-size: 13.5px; color: #2b2b40; line-height: 1.5;
+             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .acts { display: flex; gap: 4px; flex: none; opacity: 0; transition: .15s; }
+  .item:hover .acts { opacity: 1; }
+  .item .acts span { font-size: 11px; color: #8b8fa8; cursor: pointer; padding: 3px 8px; border-radius: 6px; }
+  .item .acts span:hover { color: #2b2b40; background: rgba(124,58,237,.12); }
+  .item .acts span.del:hover { color: #d05656; background: rgba(208,86,86,.08); }
+  .item .t { font-size: 11px; color: #a6a9c4; flex: none; }
+  .empty { text-align: center; padding: 56px 20px 46px; }
+  .empty .big { font-size: 44px; margin-bottom: 10px; }
+  .empty .msg { color: var(--muted); font-size: 13.5px; line-height: 2; }
+  .empty .chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+  .empty .chips button {
+    background: #fff; border: 1px solid var(--line); color: #6d28d9; border-radius: 999px;
+    padding: 7px 15px; font-size: 12.5px; cursor: pointer; transition: .15s;
+  }
+  .empty .chips button:hover { border-color: var(--accent); background: #f5f5fd; box-shadow: 0 3px 10px rgba(124,58,237,.15); }
+  .tip { color: var(--muted); font-size: 11.5px; text-align: center; margin-top: 16px; }
+  .toast { position: fixed; z-index: 99; left: 50%; bottom: 34px; transform: translateX(-50%);
+           background: #2b2b40; color: #fff; font-size: 12.5px; border-radius: 999px; padding: 9px 20px;
+           box-shadow: 0 8px 24px rgba(0,0,0,.25); animation: catPopIn .2s ease; }
+  @keyframes catPopIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div>
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo">📊</div>
+    <div><h1>问数 ChatBI</h1><p>WENSHU · AI 问数</p></div>
+  </div>
+  <nav class="sb-menu">
+    <div class="sb-item" onclick="location.href='/'"><span class="ic">💬</span><span class="txt">问数对话</span></div>
+    <div class="sb-item" onclick="location.href='/dashboard.html'"><span class="ic">🖥</span><span class="txt">问数看板</span></div>
+    <div class="sb-item" onclick="location.href='/dictionary.html'"><span class="ic">📚</span><span class="txt">数据字典</span></div>
+    <div class="sb-item" onclick="location.href='/report.html'"><span class="ic">📈</span><span class="txt">每日报告</span></div>
+    <div class="sb-item" onclick="location.href='/upload.html'"><span class="ic">⬆</span><span class="txt">上传数据</span></div>
+    <div class="sb-item on" onclick="location.href='/records.html'"><span class="ic">🕘</span><span class="txt">查询记录</span><span class="sb-badge" id="badge-hist">0</span></div>
+    <div class="sb-item" onclick="location.href='/favorites.html'"><span class="ic">⭐</span><span class="txt">收藏问法</span><span class="sb-badge" id="badge-fav">0</span></div>
+  </nav>
+  <div class="sb-foot">问数 ChatBI · AI 问数助手<br>一句话直达数仓</div>
+</aside>
+<div class="main-col">
+<div class="topbar" style="margin:-20px -28px 16px">
+  <div class="tb-crumb"><b>问数平台</b>统一智能问数体系</div>
+  <div class="tb-right">
+    <span class="tb-bell">🔔</span>
+    <span class="tb-user"><span class="tb-avatar">👤</span><span class="tb-name">企业级 SaaS</span></span>
+  </div>
+</div>
+<header>
+  <div><h1>查询记录</h1><div class="sub">问过的每一句都自动记在这里 · 点任意一条回到问数对话立即执行</div></div>
+  <div class="meta"><span onclick="render()">🔄 刷新</span><span onclick="location.href='/'">💬 返回问数</span></div>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="ic">💬</div><div><div class="v" id="stTotal">0</div><div class="k">累计提问</div></div></div>
+  <div class="stat"><div class="ic">📅</div><div><div class="v" id="stToday">0</div><div class="k">今日提问</div></div></div>
+  <div class="stat"><div class="ic">⭐</div><div><div class="v" id="stFav">0</div><div class="k">收藏问法</div></div></div>
+</div>
+
+<div class="toolbar">
+  <div class="search"><span class="sic">🔍</span><input id="kw" placeholder="搜索问法…" oninput="render()"></div>
+  <button class="toolbtn" id="sortBtn" onclick="toggleSort()">⬇ 最新在前</button>
+  <button class="toolbtn" onclick="doExport()">⬇ 导出</button>
+  <button class="toolbtn danger" onclick="clearAll()">🗑 清空记录</button>
+</div>
+
+<div class="card" id="list"></div>
+<div class="tip">数据保存在本机浏览器，仅自己可见 · 悬停条目可收藏 / 复制 / 删除</div>
+
+</div>
+
+<script>
+function loadLS(k) { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } }
+function saveLS(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+function updateBadges() {
+  const bh = document.getElementById('badge-hist'), bf = document.getElementById('badge-fav');
+  if (bh) bh.textContent = loadLS('wenshu_history').length;
+  if (bf) bf.textContent = loadLS('wenshu_favs').length;
+}
+function fmtT(ts) { const d = new Date(ts); return `${d.getMonth() + 1}-${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
+function isToday(ts) { const d = new Date(ts), n = new Date(); return d.toDateString() === n.toDateString(); }
+function toast(t) {
+  const old = document.querySelector('.toast'); if (old) old.remove();
+  const s = document.createElement('div'); s.className = 'toast'; s.textContent = t;
+  document.body.appendChild(s); setTimeout(() => s.remove(), 1600);
+}
+function copyText(t) {
+  const done = () => toast('✅ 已复制到剪贴板');
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(() => fallbackCopy(t, done));
+  else fallbackCopy(t, done);
+}
+function fallbackCopy(t, done) {
+  const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch (e) {}
+  ta.remove();
+}
+function runAsk(q) { try { sessionStorage.setItem('wenshu_ask', q); } catch (e) {} location.href = '/?from=sub'; }
+function exportCSV(items, name) {
+  if (!items.length) { toast('暂无数据可导出'); return; }
+  let csv = '\ufeff问法,时间\n';
+  items.forEach(it => { csv += '"' + it.q.replace(/"/g, '""') + '",' + fmtT(it.t) + '\n'; });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = name + '.csv';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('⬇ 已导出 CSV');
+}
+let newestFirst = true;
+
+function toggleSort() { newestFirst = !newestFirst; document.getElementById('sortBtn').textContent = newestFirst ? '⬇ 最新在前' : '⬆ 最早在前'; render(); }
+
+function currentItems() {
+  let items = loadLS('wenshu_history').slice();
+  const kw = (document.getElementById('kw').value || '').trim().toLowerCase();
+  if (kw) items = items.filter(it => it.q.toLowerCase().includes(kw));
+  items.sort((a, b) => newestFirst ? b.t - a.t : a.t - b.t);
+  return items;
+}
+
+function toggleFav(q, btn) {
+  const favs = loadLS('wenshu_favs');
+  if (favs.some(x => x.q === q)) { toast('已经在收藏里啦'); return; }
+  favs.push({ q, t: Date.now() });
+  saveLS('wenshu_favs', favs);
+  btn.textContent = '✅ 已收藏';
+  updateBadges();
+  toast('⭐ 已加入收藏');
+}
+
+function delItem(q) {
+  saveLS('wenshu_history', loadLS('wenshu_history').filter(x => x.q !== q));
+  render();
+}
+
+function doExport() { exportCSV(currentItems(), '查询记录'); }
+
+function clearAll() {
+  const items = loadLS('wenshu_history');
+  if (!items.length) { toast('记录已经是空的啦'); return; }
+  if (!confirm('确定清空全部查询记录吗？共 ' + items.length + ' 条，删除后不可恢复（收藏问法不受影响）。')) return;
+  saveLS('wenshu_history', []);
+  render(); toast('🗑 已清空');
+}
+
+function render() {
+  updateBadges();
+  document.getElementById('stTotal').textContent = loadLS('wenshu_history').length;
+  document.getElementById('stFav').textContent = loadLS('wenshu_favs').length;
+  document.getElementById('stToday').textContent = loadLS('wenshu_history').filter(it => isToday(it.t)).length;
+
+  const items = currentItems();
+  const list = document.getElementById('list');
+  if (!items.length) {
+    const kw = (document.getElementById('kw').value || '').trim();
+    if (kw) {
+      list.innerHTML = '<div class="empty"><div class="big">🔍</div><div class="msg">没找到包含「' + kw.replace(/</g, '&lt;') + '」的问法</div></div>';
+    } else {
+      list.innerHTML = '<div class="empty"><div class="big">🐱</div>'
+        + '<div class="msg">还没有提问记录<br>去问一句，问过的问法会自动记在这里</div>'
+        + '<div class="chips">'
+        + '<button onclick="runAsk(\'2025年的总销售额是多少\')">2025年的总销售额是多少</button>'
+        + '<button onclick="runAsk(\'统计2025年各地区销售总额\')">统计2025年各地区销售总额</button>'
+        + '<button onclick="runAsk(\'2025年销售额最高的5款产品\')">销售额最高的5款产品</button>'
+        + '<button onclick="runAsk(\'2025年每个月的订单量趋势\')">每月订单量趋势</button>'
+        + '</div></div>';
+    }
+    return;
+  }
+  list.innerHTML = '';
+  items.forEach((it, idx) => {
+    const row = document.createElement('div'); row.className = 'item'; row.style.animationDelay = (idx * 0.03) + 's';
+    row.onclick = () => runAsk(it.q);
+    const no = document.createElement('div'); no.className = 'no'; no.textContent = idx + 1;
+    const q = document.createElement('div'); q.className = 'q'; q.textContent = it.q; q.title = it.q;
+    row.appendChild(no); row.appendChild(q);
+    const acts = document.createElement('div'); acts.className = 'acts';
+    const fav = document.createElement('span'); fav.textContent = loadLS('wenshu_favs').some(x => x.q === it.q) ? '⭐ 已收藏' : '⭐ 收藏';
+    fav.onclick = (e) => { e.stopPropagation(); toggleFav(it.q, fav); };
+    acts.appendChild(fav);
+    const cp = document.createElement('span'); cp.textContent = '📋 复制';
+    cp.onclick = (e) => { e.stopPropagation(); copyText(it.q); };
+    acts.appendChild(cp);
+    const del = document.createElement('span'); del.className = 'del'; del.textContent = '删除';
+    del.onclick = (e) => { e.stopPropagation(); delItem(it.q); };
+    acts.appendChild(del);
+    row.appendChild(acts);
+    const t = document.createElement('div'); t.className = 't'; t.textContent = fmtT(it.t);
+    row.appendChild(t);
+    list.appendChild(row);
+  });
+}
+render();
+
+</script>
+<script src="/static/cat.js"></script>
+</body>
+</html>

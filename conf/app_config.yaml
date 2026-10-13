@@ -1,0 +1,29 @@
+# 日志配置
+logging:
+  file:
+    enable: true
+    level: INFO
+    path: logs
+    rotation: "10 MB"
+    retention: "7 days"
+  console:
+    enable: true
+    level: INFO
+
+# LLM 配置（SiliconFlow，OpenAI 兼容；2026-10-13 自 TokenHub 迁移，原账号欠费 402）
+llm:
+  model_name: deepseek-ai/DeepSeek-V3
+  # A7：真实 Key 已迁入 .env（LLM_API_KEY），此处仅占位符，缺失时启动报错
+  api_key: ${LLM_API_KEY}
+  base_url: https://api.siliconflow.cn/v1
+
+# 向量化配置：cloud 版使用内置词汇向量（char-ngram TF-IDF，无需外部 embedding 服务）
+embedding:
+  mode: lexical
+
+# 登录鉴权配置
+auth:
+  enable: true
+  username: admin
+  # A7：登录密码已迁入 .env（AUTH_PASSWORD，已改为强密码）
+  password: ${AUTH_PASSWORD}

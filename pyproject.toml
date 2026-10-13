@@ -1,0 +1,18 @@
+[project]
+name = "data-agent-cloud"
+version = "0.1.0"
+description = "NL2SQL 问数 ChatBI（云端自包含版：SQLite + 内置词汇向量）"
+requires-python = ">=3.11"
+dependencies = [
+    "aiosqlite>=0.20.0",
+    "fastapi>=0.115.0",
+    "jieba>=0.42.1",
+    "langchain>=0.3.0",
+    "langchain-deepseek>=0.1.0",
+    "langgraph>=0.2.0",
+    "loguru>=0.7.3",
+    "omegaconf>=2.3.1",
+    "pyyaml>=6.0.3",
+    "sqlalchemy>=2.0.51",
+    "uvicorn>=0.30.0",
+]

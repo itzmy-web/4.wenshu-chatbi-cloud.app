@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>问数 ChatBI · 上传数据</title>
+<style>
+  :root { --bg:#f4f5fb; --panel:#ffffff; --line:#e4e6f4; --text:#2b2b40; --muted:#8b8fa8; --accent:#7c3aed; --accent2:#6366f1; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif; color: var(--text);
+    background: linear-gradient(180deg, #f2f1fb 0%, #f4f5fb 60%);
+    height: 100vh; display: flex; flex-direction: row; position: relative; overflow: hidden;
+  }
+  .blob { position: fixed; border-radius: 50%; filter: blur(70px); pointer-events: none; z-index: 0; }
+  .blob.b1 { width: 420px; height: 420px; right: -120px; top: -140px; background: rgba(124,58,237,.14); }
+  .blob.b2 { width: 360px; height: 360px; left: 220px; bottom: -160px; background: rgba(99,102,241,.10); }
+  
+  :root { --bg:#f4f5fb; --panel:#ffffff; --line:#e4e6f4; --text:#2b2b40; --muted:#8b8fa8; --accent:#7c3aed; --accent2:#6366f1; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif; color: var(--text);
+    background: linear-gradient(180deg, #f2f1fb 0%, #f4f5fb 60%);
+    height: 100vh; display: flex; flex-direction: row; position: relative; overflow: hidden;
+  }
+  .blob { position: fixed; border-radius: 50%; filter: blur(70px); pointer-events: none; z-index: 0; }
+  .blob.b1 { width: 420px; height: 420px; right: -120px; top: -140px; background: rgba(124,58,237,.14); }
+  .blob.b2 { width: 360px; height: 360px; left: 220px; bottom: -160px; background: rgba(99,102,241,.10); }
+  /* ---------- 左侧边栏（深紫 SaaS 风 · 全站统一） ---------- */
+  .sidebar {
+    flex: none; width: 218px; height: 100vh; z-index: 2;
+    display: flex; flex-direction: column;
+    border-right: none;
+    background: linear-gradient(180deg, #251d59 0%, #1b1543 60%, #161136 100%);
+    padding: 18px 12px;
+    overflow-y: auto;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .sidebar::-webkit-scrollbar { display: none; width: 0; }
+  .sb-brand { display: flex; align-items: center; gap: 11px; padding: 2px 6px 16px; border-bottom: 1px solid rgba(255,255,255,.10); margin-bottom: 14px; }
+  .sb-logo {
+    width: 42px; height: 42px; border-radius: 11px; flex: none;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    box-shadow: 0 5px 18px rgba(124,58,237,.55);
+  }
+  .sb-brand h1 { font-size: 16.5px; font-weight: 800; line-height: 1.2; color: #fff; }
+  .sb-brand p { font-size: 10px; color: #a5a0d6; letter-spacing: 1px; margin-top: 2px; }
+  .sb-menu { display: flex; flex-direction: column; gap: 3px; }
+  .sb-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    font-size: 13.5px; color: #b6b2dd; cursor: pointer;
+    border: 1px solid transparent;
+    transition: background .12s, color .12s;
+    position: relative;
+  }
+  .sb-item .ic { font-size: 15px; width: 20px; text-align: center; flex: none; }
+  .sb-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .sb-item.on {
+    background: linear-gradient(90deg, #4f6ef7, #6d5df6);
+    border-color: transparent;
+    color: #fff; font-weight: 700;
+    box-shadow: 0 6px 18px rgba(79,110,247,.45);
+  }
+  .sb-item.on::before {
+    content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+    width: 3.5px; border-radius: 4px;
+    background: linear-gradient(180deg, #a5b4fc, #e0e7ff);
+  }
+  .sb-badge {
+    margin-left: auto; min-width: 20px; text-align: center;
+    font-size: 10.5px; font-weight: 700;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: #fff; border-radius: 999px; padding: 2px 7px;
+  }
+  .sb-foot {
+    margin-top: auto; padding: 14px 8px 2px;
+    font-size: 10.5px; color: #7d78ad; line-height: 1.8;
+    border-top: 1px solid rgba(255,255,255,.10);
+  }
+  @media (max-width: 900px) {
+    .sidebar { width: 62px; padding: 14px 8px; }
+    .sb-brand { justify-content: center; padding-bottom: 12px; }
+    .sb-brand div:not(.sb-logo) { display: none; }
+    .sb-item { justify-content: center; padding: 11px 6px; }
+    .sb-item .txt, .sb-item .sb-badge, .sb-foot { display: none; }
+    .sb-item.on::before { top: 15%; bottom: 15%; }
+  }
+  /* ---------- 顶部栏（深紫 · 全站统一） ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 30; flex: none;
+    height: 54px; display: flex; align-items: center; gap: 14px;
+    padding: 0 22px;
+    background: linear-gradient(90deg, #2a2166 0%, #251d59 55%, #1e1748 100%);
+    color: #e6e3fa;
+    box-shadow: 0 2px 12px rgba(15,10,50,.35);
+  }
+  .tb-crumb { font-size: 12.5px; color: #a5a0d6; }
+  .tb-crumb b { color: #fff; font-size: 13.5px; margin-right: 8px; }
+  .tb-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .tb-bell { position: relative; font-size: 17px; cursor: default; }
+  .tb-bell::after {
+    content: ''; position: absolute; top: -2px; right: -4px;
+    width: 7px; height: 7px; border-radius: 50%; background: #f87171;
+  }
+  .tb-user { display: flex; align-items: center; gap: 9px; }
+  .tb-avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex: none;
+    background: linear-gradient(135deg, #8b5cf6, #4f6ef7);
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .tb-name { font-size: 12.5px; color: #d9d4f4; letter-spacing: .5px; }
+
+  
+  /* ---------- 主区 ---------- */
+  .main-col { flex: 1; min-width: 0; height: 100vh; overflow-y: auto; padding: 20px 28px 30px; position: relative; z-index: 1; }
+  .main-col::-webkit-scrollbar { width: 8px; } .main-col::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  header { display: flex; align-items: center; gap: 14px; }
+  h1 { font-size: 21px; font-weight: 800; }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .meta { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .meta span { border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px; cursor: pointer; background: #fff; transition: .15s; }
+  .meta span:hover { color: #6d28d9; border-color: var(--accent); }
+  .up-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; margin-top: 18px; }
+  @media (max-width: 1000px) { .up-grid { grid-template-columns: 1fr; } }
+  .up-card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 26px 28px; box-shadow: 0 3px 14px rgba(99,102,241,.08); }
+  #dropzone { border: 2px dashed #c4b5fd; border-radius: 14px; padding: 52px 20px; text-align: center; cursor: pointer; transition: .18s; background: #faf9ff; }
+  #dropzone:hover, #dropzone.drag { border-color: #7c3aed; background: #f3f0ff; transform: translateY(-1px); }
+  .dz-ico { width: 58px; height: 58px; margin: 0 auto 14px; border-radius: 16px; font-size: 26px;
+            background: linear-gradient(135deg, #8b5cf6, #4f6ef7); color: #fff;
+            display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(124,58,237,.4); }
+  .dz-t1 { font-size: 15px; font-weight: 700; color: #2b2b40; }
+  .dz-t2 { font-size: 12px; color: #8b8fa8; margin-top: 8px; }
+  #upprogress { margin-top: 18px; }
+  .bar { height: 8px; border-radius: 999px; background: #eceefb; overflow: hidden; }
+  .fill { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #7c3aed, #4f6ef7); transition: width .5s; }
+  .ptext { font-size: 12.5px; color: #6d28d9; margin-top: 10px; text-align: center; }
+  #upresult { margin-top: 16px; font-size: 13px; line-height: 1.9; }
+  .up-ok { color: #2b2b40; background: #f3f0ff; border: 1px solid #ddd6fe; border-radius: 10px; padding: 10px 14px; }
+  .up-ok b { color: #6d28d9; }
+  .up-cols { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .colchip { font-size: 11.5px; color: #6d28d9; background: rgba(124,58,237,.08); border: 1px solid rgba(124,58,237,.25); border-radius: 999px; padding: 3px 10px; }
+  .up-err { color: #d05656; background: rgba(208,86,86,.07); border: 1px solid rgba(208,86,86,.3); border-radius: 10px; padding: 10px 14px; }
+  .goask { margin-top: 14px; width: 100%; border: none; cursor: pointer; color: #fff; font-size: 14px; font-weight: 700;
+           background: linear-gradient(90deg, #7c3aed, #4f6ef7); padding: 12px; border-radius: 999px; transition: .15s; }
+  .goask:hover { filter: brightness(1.08); }
+  .up-tips { margin-top: 20px; padding-top: 16px; border-top: 1px dashed #e0e2f2; font-size: 12.5px; color: #8b8fa8; line-height: 2; }
+  .up-tips b { display: block; color: #4a4a6f; margin-bottom: 4px; }
+  .up-side { display: flex; flex-direction: column; gap: 16px; }
+  .side-card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; box-shadow: 0 3px 14px rgba(99,102,241,.08); }
+  .side-card h3 { font-size: 14px; color: #2b2b40; margin-bottom: 12px; }
+  .eg { font-size: 13px; color: #6d28d9; background: rgba(124,58,237,.07); border: 1px solid rgba(124,58,237,.22);
+        border-radius: 999px; padding: 8px 16px; margin-bottom: 8px; cursor: pointer; transition: .15s; }
+  .eg:hover { background: rgba(124,58,237,.14); transform: translateX(3px); }
+  .sidenote { font-size: 12px; color: #8b8fa8; line-height: 2; }
+
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div>
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo">📊</div>
+    <div><h1>问数 ChatBI</h1><p>WENSHU · AI 问数</p></div>
+  </div>
+  <nav class="sb-menu">
+    <div class="sb-item" onclick="location.href='/'"><span class="ic">💬</span><span class="txt">问数对话</span></div>
+    <div class="sb-item" onclick="location.href='/dashboard.html'"><span class="ic">🖥</span><span class="txt">问数看板</span></div>
+    <div class="sb-item" onclick="location.href='/dictionary.html'"><span class="ic">📚</span><span class="txt">数据字典</span></div>
+    <div class="sb-item" onclick="location.href='/report.html'"><span class="ic">📈</span><span class="txt">每日报告</span></div>
+    <div class="sb-item on"><span class="ic">⬆</span><span class="txt">上传数据</span></div>
+    <div class="sb-item" onclick="location.href='/records.html'"><span class="ic">🕘</span><span class="txt">查询记录</span><span class="sb-badge" id="badge-hist">0</span></div>
+    <div class="sb-item" onclick="location.href='/favorites.html'"><span class="ic">⭐</span><span class="txt">收藏问法</span><span class="sb-badge" id="badge-fav">0</span></div>
+  </nav>
+  <div class="sb-foot">问数 ChatBI · AI 问数助手<br>一句话直达数仓</div>
+</aside>
+<div class="main-col">
+<div class="topbar" style="margin:-20px -28px 16px">
+  <div class="tb-crumb"><b>问数平台</b>统一智能问数体系</div>
+  <div class="tb-right">
+    <span class="tb-bell">🔔</span>
+    <span class="tb-user"><span class="tb-avatar">👤</span><span class="tb-name">企业级 SaaS</span></span>
+  </div>
+</div>
+<header>
+  <div><h1>上传数据</h1><div class="sub">上传 .csv / .xlsx，系统自动建表并识别字段含义，随后即可用中文直接问这份数据</div></div>
+  <div class="meta"><span onclick="location.href='/'">💬 去问数</span><span onclick="location.href='/dictionary.html'">📚 查看数据字典</span></div>
+</header>
+
+<div class="up-grid">
+  <div class="up-card">
+    <div id="dropzone">
+      <div class="dz-ico">⬆</div>
+      <div class="dz-t1">点击选择文件，或把文件拖到这里</div>
+      <div class="dz-t2">支持 .csv / .xlsx · 单文件 ≤ 20MB · ≤ 2 万行</div>
+    </div>
+    <input type="file" id="upfile" accept=".csv,.xlsx" style="display:none">
+    <div id="upprogress" style="display:none">
+      <div class="bar"><div class="fill" id="upfill"></div></div>
+      <div class="ptext" id="uptext">正在上传…</div>
+    </div>
+    <div id="upresult"></div>
+    <div class="up-tips">
+      <b>上传后会自动发生什么？</b>
+      <div>① 按文件名自动建表（中文名自动转拼音表名）</div>
+      <div>② AI 逐字段识别业务含义并生成中文别名</div>
+      <div>③ 立即可用中文提问，例如「这份数据里销量最高的是哪个」</div>
+    </div>
+  </div>
+  <div class="up-side">
+    <div class="side-card">
+      <h3>💡 提问示例</h3>
+      <div class="eg" onclick="tryAsk('统计这张表的总销售额')">统计这张表的总销售额</div>
+      <div class="eg" onclick="tryAsk('按类别看看各自的占比')">按类别看看各自的占比</div>
+      <div class="eg" onclick="tryAsk('销量最高的前5名是哪些')">销量最高的前5名是哪些</div>
+      <div class="sidenote">上传成功后，回到问数对话直接输入即可</div>
+    </div>
+    <div class="side-card">
+      <h3>📌 小贴士</h3>
+      <div class="sidenote">· 首行请放列名（表头）<br>· 日期列推荐 yyyy-mm-dd 格式<br>· 上传的表会出现在<a href="/dictionary.html" style="color:#7c3aed">数据字典</a>里，随时可查结构</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function loadLS(k) { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } }
+function updateBadges() {
+  const bh = document.getElementById('badge-hist'), bf = document.getElementById('badge-fav');
+  if (bh) bh.textContent = loadLS('wenshu_history').length;
+  if (bf) bf.textContent = loadLS('wenshu_favs').length;
+}
+updateBadges();
+
+// 鉴权：静默游客通道，绝不跳登录页
+let token = sessionStorage.getItem('wenshu_token') || localStorage.getItem('wenshu_token') || '';
+async function renewToken() {
+  try { sessionStorage.removeItem('wenshu_token'); localStorage.removeItem('wenshu_token'); } catch (e) {}
+  try {
+    const r = await fetch('/api/guest', { method: 'POST' });
+    if (r.ok) {
+      const t = (await r.json()).token;
+      try { sessionStorage.setItem('wenshu_token', t); localStorage.setItem('wenshu_token', t); } catch (e) {}
+      return t;
+    }
+  } catch (e) {}
+  return '';
+}
+async function ensureToken() { if (!token) { const t = await renewToken(); if (t) token = t; } return token; }
+ensureToken();
+
+function tryAsk(q) { try { sessionStorage.setItem('wenshu_ask', q); } catch (e) {} location.href = '/?from=sub'; }
+
+const dz = document.getElementById('dropzone');
+const fileInput = document.getElementById('upfile');
+dz.onclick = () => fileInput.click();
+['dragover', 'dragenter'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
+['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
+dz.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) doUpload(f); });
+fileInput.onchange = () => { if (fileInput.files[0]) doUpload(fileInput.files[0]); };
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+async function doUpload(file) {
+  const res = document.getElementById('upresult');
+  const prog = document.getElementById('upprogress');
+  const fill = document.getElementById('upfill');
+  const ptext = document.getElementById('uptext');
+  if (!/\.(csv|xlsx)$/i.test(file.name)) { res.innerHTML = '<div class="up-err">❌ 仅支持 .csv 或 .xlsx 文件</div>'; return; }
+  if (file.size > 20 * 1024 * 1024) { res.innerHTML = '<div class="up-err">❌ 文件超过 20MB 限制</div>'; return; }
+  res.innerHTML = ''; prog.style.display = 'block'; fill.style.width = '8%';
+  ptext.textContent = `正在上传「${file.name}」…`;
+  // 假进度条（上传+AI识别期间给用户反馈）
+  let pct = 8;
+  const timer = setInterval(() => { pct = Math.min(pct + Math.random() * 6, 92); fill.style.width = pct + '%'; }, 600);
+  try {
+    await ensureToken();
+    ptext.textContent = 'AI 正在学习字段含义…（约 20~40 秒）';
+    const fd = new FormData(); fd.append('file', file);
+    const resp = await fetch('/api/upload', { method: 'POST', headers: { 'X-Token': token }, body: fd });
+    if (resp.status === 401) {
+      const t = await renewToken();
+      if (t) { token = t; return doUpload(file); }
+    }
+    const d = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(d.detail || '上传失败');
+    clearInterval(timer); fill.style.width = '100%';
+    setTimeout(() => { prog.style.display = 'none'; }, 600);
+    res.innerHTML = `<div class="up-ok">✅ 入库成功！表 <b>${esc(d.table)}</b>（${d.rows} 行 × ${d.columns.length} 列）</div>
+      <div class="up-cols">${d.columns.slice(0, 10).map(c => `<span class="colchip">${esc(c.name)} → ${esc(c.description)}</span>`).join('')}</div>
+      <button class="goask" onclick="tryAsk('统计${esc(d.table).replace(/^./, c => c)}表的总行数')">🎉 立即去问这份数据</button>`;
+  } catch (e) {
+    clearInterval(timer); prog.style.display = 'none';
+    res.innerHTML = '<div class="up-err">❌ ' + esc(e.message) + '</div>';
+  }
+}
+</script>
+<script src="/static/cat.js"></script>
+</body>
+</html>

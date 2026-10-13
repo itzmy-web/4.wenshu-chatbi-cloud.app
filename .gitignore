@@ -1,0 +1,8 @@
+# 敏感凭据（A7：严禁提交）
+.env
+
+# 运行产物
+__pycache__/
+*.pyc
+logs/
+data/

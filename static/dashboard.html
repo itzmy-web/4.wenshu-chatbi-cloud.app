@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>问数 ChatBI · 问数看板</title>
+<script src="/static/echarts.min.js"></script>
+<style>
+  :root { --bg:#f4f5fb; --panel:#ffffff; --line:#e4e6f4; --text:#2b2b40; --muted:#8b8fa8; --accent:#7c3aed; --accent2:#6366f1; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif; color: var(--text);
+    background: linear-gradient(180deg, #f2f1fb 0%, #f4f5fb 60%);
+    height: 100vh; display: flex; flex-direction: row;
+  }
+  /* ---------- 左侧边栏（深紫 SaaS 风 · 全站统一） ---------- */
+  .sidebar {
+    flex: none; width: 218px; height: 100vh; z-index: 2;
+    display: flex; flex-direction: column;
+    border-right: none;
+    background: linear-gradient(180deg, #251d59 0%, #1b1543 60%, #161136 100%);
+    padding: 18px 12px;
+    overflow-y: auto;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .sidebar::-webkit-scrollbar { display: none; width: 0; }
+  .sb-brand { display: flex; align-items: center; gap: 11px; padding: 2px 6px 16px; border-bottom: 1px solid rgba(255,255,255,.10); margin-bottom: 14px; }
+  .sb-logo {
+    width: 42px; height: 42px; border-radius: 11px; flex: none;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    box-shadow: 0 5px 18px rgba(124,58,237,.55);
+  }
+  .sb-brand h1 { font-size: 16.5px; font-weight: 800; line-height: 1.2; color: #fff; }
+  .sb-brand p { font-size: 10px; color: #a5a0d6; letter-spacing: 1px; margin-top: 2px; }
+  .sb-menu { display: flex; flex-direction: column; gap: 3px; }
+  .sb-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    font-size: 13.5px; color: #b6b2dd; cursor: pointer;
+    border: 1px solid transparent;
+    transition: background .12s, color .12s;
+    position: relative;
+  }
+  .sb-item .ic { font-size: 15px; width: 20px; text-align: center; flex: none; }
+  .sb-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .sb-item.on {
+    background: linear-gradient(90deg, #4f6ef7, #6d5df6);
+    border-color: transparent;
+    color: #fff; font-weight: 700;
+    box-shadow: 0 6px 18px rgba(79,110,247,.45);
+  }
+  .sb-item.on::before {
+    content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+    width: 3.5px; border-radius: 4px;
+    background: linear-gradient(180deg, #a5b4fc, #e0e7ff);
+  }
+  .sb-badge {
+    margin-left: auto; min-width: 20px; text-align: center;
+    font-size: 10.5px; font-weight: 700;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: #fff; border-radius: 999px; padding: 2px 7px;
+  }
+  .sb-foot {
+    margin-top: auto; padding: 14px 8px 2px;
+    font-size: 10.5px; color: #7d78ad; line-height: 1.8;
+    border-top: 1px solid rgba(255,255,255,.10);
+  }
+  @media (max-width: 900px) {
+    .sidebar { width: 62px; padding: 14px 8px; }
+    .sb-brand { justify-content: center; padding-bottom: 12px; }
+    .sb-brand div:not(.sb-logo) { display: none; }
+    .sb-item { justify-content: center; padding: 11px 6px; }
+    .sb-item .txt, .sb-item .sb-badge, .sb-foot { display: none; }
+    .sb-item.on::before { top: 15%; bottom: 15%; }
+  }
+  /* ---------- 顶部栏（深紫 · 全站统一） ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 30; flex: none;
+    height: 54px; display: flex; align-items: center; gap: 14px;
+    padding: 0 22px;
+    background: linear-gradient(90deg, #2a2166 0%, #251d59 55%, #1e1748 100%);
+    color: #e6e3fa;
+    box-shadow: 0 2px 12px rgba(15,10,50,.35);
+  }
+  .tb-crumb { font-size: 12.5px; color: #a5a0d6; }
+  .tb-crumb b { color: #fff; font-size: 13.5px; margin-right: 8px; }
+  .tb-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .tb-bell { position: relative; font-size: 17px; cursor: default; }
+  .tb-bell::after {
+    content: ''; position: absolute; top: -2px; right: -4px;
+    width: 7px; height: 7px; border-radius: 50%; background: #f87171;
+  }
+  .tb-user { display: flex; align-items: center; gap: 9px; }
+  .tb-avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex: none;
+    background: linear-gradient(135deg, #8b5cf6, #4f6ef7);
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .tb-name { font-size: 12.5px; color: #d9d4f4; letter-spacing: .5px; }
+  /* ---------- 主区 ---------- */
+  .main-col { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; padding: 18px 24px 24px; overflow-y: auto; }
+  header { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line); flex: none; }
+  .logo { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2));
+          display: flex; align-items: center; justify-content: center; font-size: 21px; box-shadow: 0 4px 14px rgba(124,58,237,.30); }
+  h1 { font-size: 21px; font-weight: 800; }
+  .meta { margin-left: auto; display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); }
+  .meta span { border: 1px solid var(--line); border-radius: 999px; padding: 5px 13px; background: #ffffff; }
+  .meta .act { cursor: pointer; transition: .15s; }
+  .meta .act:hover { color: #6d28d9; border-color: var(--accent); }
+  #grid { flex: 1; min-height: 320px; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: auto 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .kpi { border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; background: #ffffff;
+         box-shadow: 0 3px 14px rgba(99,102,241,.08); }
+  .kpi .v { font-size: 30px; font-weight: 800; background: linear-gradient(90deg, #7c3aed, #8b5cf6);
+            -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .kpi .k { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .panel { border: 1px solid var(--line); border-radius: 14px; background: #ffffff; display: flex; flex-direction: column; overflow: hidden;
+           box-shadow: 0 3px 14px rgba(99,102,241,.08); }
+  .panel h3 { font-size: 14px; padding: 12px 18px; color: #4a4a6f; border-bottom: 1px solid #e8e9f5; }
+  .panel .bd { flex: 1; min-height: 0; }
+  .panel .err { color: #d05656; font-size: 12px; padding: 20px; }
+  @media (max-width: 1100px) { #grid { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo">📊</div>
+    <div><h1>问数 ChatBI</h1><p>WENSHU · AI 问数</p></div>
+  </div>
+  <nav class="sb-menu">
+    <div class="sb-item" onclick="location.href='/'"><span class="ic">💬</span><span class="txt">问数对话</span></div>
+    <div class="sb-item on" onclick="location.href='/dashboard.html'"><span class="ic">🖥</span><span class="txt">问数看板</span></div>
+    <div class="sb-item" onclick="location.href='/dictionary.html'"><span class="ic">📚</span><span class="txt">数据字典</span></div>
+    <div class="sb-item" onclick="location.href='/report.html'"><span class="ic">📈</span><span class="txt">每日报告</span></div>
+    <div class="sb-item" onclick="location.href='/upload.html'"><span class="ic">⬆</span><span class="txt">上传数据</span></div>
+    <div class="sb-item" onclick="location.href='/records.html'"><span class="ic">🕘</span><span class="txt">查询记录</span><span class="sb-badge" id="badge-hist">0</span></div>
+    <div class="sb-item" onclick="location.href='/favorites.html'"><span class="ic">⭐</span><span class="txt">收藏问法</span><span class="sb-badge" id="badge-fav">0</span></div>
+  </nav>
+  <div class="sb-foot">问数 ChatBI · AI 问数助手<br>一句话直达数仓</div>
+</aside>
+<div class="main-col">
+<div class="topbar" style="margin:0 0 16px">
+  <div class="tb-crumb"><b>问数平台</b>统一智能问数体系</div>
+  <div class="tb-right">
+    <span class="tb-bell">🔔</span>
+    <span class="tb-user"><span class="tb-avatar">👤</span><span class="tb-name">企业级 SaaS</span></span>
+  </div>
+</div>
+
+<header>
+  <h1>问数看板</h1>
+  <div class="meta">
+    <span id="updated">尚未刷新</span>
+    <span class="act" onclick="refreshAll()">🔄 刷新</span>
+    <span class="act" onclick="location.href='/'">💬 返回问数</span>
+  </div>
+</header>
+<div id="grid"></div>
+</div>
+
+<script>
+// 侧边栏徽章（与首页共用 localStorage）
+function loadLS(k) { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } }
+(function () {
+  const bh = document.getElementById('badge-hist'), bf = document.getElementById('badge-fav');
+  if (bh) bh.textContent = loadLS('wenshu_history').length;
+  if (bf) bf.textContent = loadLS('wenshu_favs').length;
+})();
+function goUpload() { location.href = '/upload.html'; }
+function goPanel(t) { location.href = t === 'fav' ? '/favorites.html' : '/records.html'; }
+
+// token 由首页登录写入 sessionStorage（同一标签页有效）；未登录直接回首页登录
+// token 由首页登录写入；新标签页兜底读 localStorage。
+// 完全无 token（首次打开/清过浏览器）→ 回首页登录（保留先登录的入口体验）；
+// 中途 token 失效 → 401 静默续登自愈（renewToken），绝不把人踢回登录页
+let token = sessionStorage.getItem('wenshu_token') || localStorage.getItem('wenshu_token') || '';
+
+// 401 自愈：清掉本地 token → 静默走游客通道重拿（服务端 token 恒定，重拿即有效）→ 调用方重试
+async function renewToken() {
+  try { sessionStorage.removeItem('wenshu_token'); localStorage.removeItem('wenshu_token'); } catch (e) {}
+  try {
+    const r = await fetch('/api/guest', { method: 'POST' });
+    if (r.ok) {
+      const t = (await r.json()).token;
+      try { sessionStorage.setItem('wenshu_token', t); localStorage.setItem('wenshu_token', t); } catch (e) {}
+      return t;
+    }
+  } catch (e) {}
+  return '';
+}
+async function ensureToken() { if (!token) { const t = await renewToken(); if (t) token = t; } return token; }
+
+// 默认面板 + 用户自定义面板（聊天页「📌 加到看板」写入 wenshu_dash）
+const userPanels = (() => { try { return JSON.parse(localStorage.getItem('wenshu_dash')) || []; } catch { return []; } })();
+const PANELS = [
+  { t: 'kpi',   q: '2025年的总销售额是多少',           label: '总销售额' },
+  { t: 'kpi',   q: '2025年总共有多少笔订单',           label: '订单总数' },
+  { t: 'kpi',   q: '2025年下单的客户一共有多少个',     label: '下单客户数' },
+  { t: 'kpi',   q: '2025年平均每笔订单的金额是多少',   label: '平均订单金额' },
+  { t: 'chart', q: '统计2025年各地区销售总额',         label: '各地区销售额' },
+  { t: 'chart', q: '2025年每个月的订单量趋势',         label: '月度订单量趋势' },
+  { t: 'chart', q: '2025年销售额最高的5款产品',        label: '产品销售额 TOP5' },
+  { t: 'chart', q: '2025年消费金额最高的5位客户',      label: '客户消费 TOP5' },
+  ...userPanels.map(x => ({ t: 'chart', q: x.q, label: x.q.length > 16 ? x.q.slice(0, 16) + '…' : x.q, custom: true })),
+];
+const COLORS = ['#7c3aed', '#7c3aed', '#a78bfa', '#6d28d9', '#3d9a6c', '#c2410c'];
+const grid = document.getElementById('grid');
+const charts = [];
+
+function buildDom() {
+  PANELS.forEach((p, i) => {
+    if (p.t === 'kpi') {
+      const d = document.createElement('div'); d.className = 'kpi';
+      d.innerHTML = `<div class="v">--</div><div class="k">${p.label}</div>`;
+      d.id = 'panel-' + i; grid.appendChild(d);
+    } else {
+      const d = document.createElement('div'); d.className = 'panel';
+      d.innerHTML = `<h3>${p.label}</h3><div class="bd" id="panel-${i}"></div>`;
+      grid.appendChild(d);
+    }
+  });
+}
+
+async function askOne(q, retried) {
+  const resp = await fetch('/api/query', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Token': token },
+    body: JSON.stringify({ query: q, history: [] })
+  });
+  if (resp.status === 401) {
+    if (!retried) {
+      const t = await renewToken();
+      if (t) { token = t; return askOne(q, true); }  // 静默续登后重试，用户无感
+    }
+    throw new Error('登录状态已失效，请刷新页面重试');  // 兜底（几乎不会走到），只在本页报错不跳转
+  }
+  const reader = resp.body.getReader(); const dec = new TextDecoder();
+  let buf = '', out = { result: undefined, insight: '' };
+  while (true) {
+    const { done, value } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf('\n\n')) >= 0) {
+      const raw = buf.slice(0, idx); buf = buf.slice(idx + 2);
+      for (const line of raw.split('\n')) {
+        if (!line.startsWith('data:')) continue;
+        let m; try { m = JSON.parse(line.slice(5).trim()); } catch { continue; }
+        if (m.result !== undefined) out.result = m.result;
+        if (m.insight) out.insight = m.insight;
+      }
+    }
+  }
+  return out;
+}
+
+function fmt(v) { const n = Number(v); return Number.isInteger(n) ? n.toLocaleString('zh-CN') : n.toLocaleString('zh-CN', { minimumFractionDigits: 2 }); }
+
+async function fillPanel(i) {
+  const p = PANELS[i]; const el = document.getElementById('panel-' + i);
+  try {
+    const { result } = await askOne(p.q);
+    if (!Array.isArray(result) || !result.length || typeof result[0] !== 'object') { el.innerHTML = '<div class="err">暂无数据</div>'; return; }
+    const cols = Object.keys(result[0]);
+    const isNum = v => v !== '' && v !== null && !isNaN(Number(v));
+    const numCols = cols.filter(c => result.every(r => isNum(r[c])));
+    // KPI：取第一个数值
+    if (p.t === 'kpi') {
+      const v = numCols.length ? fmt(result[0][numCols[0]]) : '--';
+      el.querySelector('.v').textContent = v; return;
+    }
+    // 图表面板：单值也降级为数字展示
+    if (result.length === 1 && numCols.length === 1) {
+      el.innerHTML = `<div class="v" style="font-size:34px;font-weight:800;padding:20px;color:#7c3aed">${fmt(result[0][numCols[0]])}</div>`; return;
+    }
+    if (!numCols.length) { el.innerHTML = '<div class="err">结果无数值列</div>'; return; }
+    const label = cols.find(c => !numCols.includes(c));
+    const labels = result.map(r => String(r[label]));
+    const dateish = /(年|月|季|周|日|\d{4}|\d{6}|Q[1-4])/i;
+    const type = (labels.some(l => dateish.test(l)) && result.length > 2) ? 'line'
+               : (result.length <= 6 && numCols.length === 1) ? 'pie' : 'bar';
+    el.innerHTML = ''; const div = document.createElement('div');
+    div.style.cssText = 'width:100%;height:100%'; el.appendChild(div);
+    const chart = echarts.init(div); charts.push(chart);
+    let option;
+    if (type === 'pie') {
+      option = { tooltip: { trigger: 'item', formatter: '{b}<br/>{c} ({d}%)' },
+        series: [{ type: 'pie', radius: ['35%', '62%'],
+          data: result.map((r, i2) => ({ name: String(r[label]), value: Number(r[numCols[0]]), itemStyle: { color: COLORS[i2 % COLORS.length] } })),
+          label: { color: '#55556e', fontSize: 11 }, labelLine: { lineStyle: { color: '#c9c6ee' } } }] };
+    } else {
+      option = { tooltip: { trigger: 'axis' },
+        legend: numCols.length > 1 ? { textStyle: { color: '#55556e', fontSize: 11 }, top: 0 } : undefined,
+        grid: { left: 10, right: 18, top: numCols.length > 1 ? 30 : 18, bottom: 8, containLabel: true },
+        xAxis: { type: 'category', data: labels, axisLabel: { color: '#8b8fa8', rotate: labels.length > 6 ? 30 : 0, interval: 0, fontSize: 11 },
+                 axisLine: { lineStyle: { color: '#c9c6ee' } } },
+        yAxis: { type: 'value', axisLabel: { color: '#8b8fa8', fontSize: 11 }, splitLine: { lineStyle: { color: '#e8e9f5' } } },
+        series: numCols.map((c, i2) => ({ name: c, type, smooth: true, barMaxWidth: 36,
+          data: result.map(r => Number(r[c])), itemStyle: { color: COLORS[i2 % COLORS.length] } })) };
+    }
+    chart.setOption(option);
+  } catch (e) {
+    el.innerHTML = `<div class="err">加载失败：${String(e).slice(0, 80)}</div>`;
+  }
+}
+
+async function refreshAll() {
+  for (let i = 0; i < PANELS.length; i++) fillPanel(i);  // 并发发起
+  document.getElementById('updated').textContent = '更新于 ' + new Date().toLocaleTimeString('zh-CN');
+}
+
+ensureToken().then(() => { buildDom(); refreshAll(); });
+// 自动刷新已按需求移除（2026-10-12），保留手动「🔄 刷新」按钮
+window.addEventListener('resize', () => charts.forEach(c => c.resize()));
+</script>
+<script src="/static/cat.js"></script>
+</body>
+</html>
