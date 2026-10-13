@@ -262,7 +262,11 @@ async function fillPanel(i) {
     if (!Array.isArray(result) || !result.length || typeof result[0] !== 'object') { el.innerHTML = '<div class="err">暂无数据</div>'; return; }
     const cols = Object.keys(result[0]);
     const isNum = v => v !== '' && v !== null && !isNaN(Number(v));
-    const numCols = cols.filter(c => result.every(r => isNum(r[c])));
+    // 数值列判定：忽略 null/空值，非空值全部可转数字即算数值列（避免个别 null 把维度列挤上来）
+    const numCols = cols.filter(c => {
+      const vals = result.map(r => r[c]).filter(v => v !== null && v !== undefined && v !== '');
+      return vals.length > 0 && vals.every(isNum);
+    });
     // KPI：取第一个数值
     if (p.t === 'kpi') {
       const v = numCols.length ? fmt(result[0][numCols[0]]) : '--';
@@ -273,11 +277,21 @@ async function fillPanel(i) {
       el.innerHTML = `<div class="v" style="font-size:34px;font-weight:800;padding:20px;color:#7c3aed">${fmt(result[0][numCols[0]])}</div>`; return;
     }
     if (!numCols.length) { el.innerHTML = '<div class="err">结果无数值列</div>'; return; }
-    const label = cols.find(c => !numCols.includes(c));
-    const labels = result.map(r => String(r[label]));
+    // 标签列选取（2026-10-13 修复 x 轴 undefined）：
+    // 优先非数值列；若所有列都是数值（如「月份」本身就是整数），取第一列作标签、其余作图；
+    // 单列全数值时用行号兜底，保证 labels 永远不是 undefined
+    let label = cols.find(c => !numCols.includes(c));
+    let valueCols = numCols.slice();
+    if (label === undefined && cols.length > 1) {
+      label = cols[0];
+      valueCols = numCols.filter(c => c !== label);
+    }
+    let labels;
+    if (label === undefined) { labels = result.map((r, i2) => String(i2 + 1)); }
+    else { labels = result.map(r => { const v = r[label]; return String(v === null || v === undefined ? '—' : v); }); }
     const dateish = /(年|月|季|周|日|\d{4}|\d{6}|Q[1-4])/i;
-    const type = (labels.some(l => dateish.test(l)) && result.length > 2) ? 'line'
-               : (result.length <= 6 && numCols.length === 1) ? 'pie' : 'bar';
+    const type = ((dateish.test(labels.join('')) || dateish.test(String(label ?? ''))) && result.length > 2) ? 'line'
+               : (result.length <= 6 && valueCols.length === 1) ? 'pie' : 'bar';
     el.innerHTML = ''; const div = document.createElement('div');
     div.style.cssText = 'width:100%;height:100%'; el.appendChild(div);
     const chart = echarts.init(div); charts.push(chart);
@@ -285,16 +299,16 @@ async function fillPanel(i) {
     if (type === 'pie') {
       option = { tooltip: { trigger: 'item', formatter: '{b}<br/>{c} ({d}%)' },
         series: [{ type: 'pie', radius: ['35%', '62%'],
-          data: result.map((r, i2) => ({ name: String(r[label]), value: Number(r[numCols[0]]), itemStyle: { color: COLORS[i2 % COLORS.length] } })),
+          data: result.map((r, i2) => ({ name: String(r[label]), value: Number(r[valueCols[0]]), itemStyle: { color: COLORS[i2 % COLORS.length] } })),
           label: { color: '#55556e', fontSize: 11 }, labelLine: { lineStyle: { color: '#c9c6ee' } } }] };
     } else {
       option = { tooltip: { trigger: 'axis' },
-        legend: numCols.length > 1 ? { textStyle: { color: '#55556e', fontSize: 11 }, top: 0 } : undefined,
-        grid: { left: 10, right: 18, top: numCols.length > 1 ? 30 : 18, bottom: 8, containLabel: true },
+        legend: valueCols.length > 1 ? { textStyle: { color: '#55556e', fontSize: 11 }, top: 0 } : undefined,
+        grid: { left: 10, right: 18, top: valueCols.length > 1 ? 30 : 18, bottom: 8, containLabel: true },
         xAxis: { type: 'category', data: labels, axisLabel: { color: '#8b8fa8', rotate: labels.length > 6 ? 30 : 0, interval: 0, fontSize: 11 },
                  axisLine: { lineStyle: { color: '#c9c6ee' } } },
         yAxis: { type: 'value', axisLabel: { color: '#8b8fa8', fontSize: 11 }, splitLine: { lineStyle: { color: '#e8e9f5' } } },
-        series: numCols.map((c, i2) => ({ name: c, type, smooth: true, barMaxWidth: 36,
+        series: valueCols.map((c, i2) => ({ name: c, type, smooth: true, barMaxWidth: 36,
           data: result.map(r => Number(r[c])), itemStyle: { color: COLORS[i2 % COLORS.length] } })) };
     }
     chart.setOption(option);
