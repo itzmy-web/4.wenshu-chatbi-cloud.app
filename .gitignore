@@ -6,3 +6,4 @@ __pycache__/
 *.pyc
 logs/
 data/
+logs_server.out
