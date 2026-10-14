@@ -1,4 +1,6 @@
 import asyncio
+import json
+import re
 from os import name
 from langgraph.runtime import Runtime
 from app.agent.context import DataAgentContext
@@ -9,6 +11,36 @@ from app.models.mysql.metric_info_mysql import MetricInfoMySQL
 from app.models.mysql.table_info_mysql import TableInfoMySQL
 from app.models.qdrant.column_info_qdrant import ColumnInfoQdrant
 from app.models.qdrant.metric_info_qdrant import MetricInfoQdrant
+
+
+def _as_str_list(value) -> list:
+    """
+    2026-10-14 修复：把「可能是 JSON 字符串」的列表字段统一成 Python list。
+
+    背景（纯指标问法失效的根因）：meta 库里指标的 relevant_columns 存的是
+    JSON 字符串（如 '["fact_order.order_amount"]'），而 merge 节点原先直接迭代它，
+    导致逐字符遍历（'[', '"', 'f' ...）→ 只有一个 '.' 勉强通过 → 解析出空表名/空列名
+    → 指标贡献 0 个字段 → 表为空 → 误触发澄清反问。
+    现象：中文问法因「碰巧命中列别名」而正常，英文指标名（GMV）必挂。
+    """
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple, set)):
+        return [str(v) for v in value]
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return []
+        # 优先按 JSON 解析
+        try:
+            parsed = json.loads(text)
+            if isinstance(parsed, (list, tuple, set)):
+                return [str(v) for v in parsed]
+            return [str(parsed)]
+        except Exception:
+            # 退化：按中英文逗号/顿号切分
+            return [s.strip().strip('"\'') for s in re.split(r"[,，、]", text) if s.strip()]
+    return [str(value)]
 
 
 async def merge_retrieved_info(state: DataAgentState, runtime: Runtime[DataAgentContext]):
@@ -38,7 +70,8 @@ async def merge_retrieved_info(state: DataAgentState, runtime: Runtime[DataAgent
         # 1.处理召回的指标信息，将指标信息的相关字段加入到字段列表
         for retrieved_metric in retrieved_metrics:
             # 获取指标对应的字段列表（兼容 列id 与 "表.列名" 两种形式）
-            relevant_columns = retrieved_metric["relevant_columns"]
+            # 2026-10-14：统一为 list（库里存的是 JSON 字符串，直接迭代会逐字符遍历）
+            relevant_columns = _as_str_list(retrieved_metric["relevant_columns"])
             # 遍历字段列表
             for relevant_column in relevant_columns:
                 # 判断列信息列表中是否已经在该字段
@@ -154,8 +187,9 @@ def convert_metric_info_from_qdrant_to_stata(metric_info_qdrant: MetricInfoQdran
     return MetricInfoStata(
         name=metric_info_qdrant['name'],
         description=metric_info_qdrant['description'],
-        relevant_columns=metric_info_qdrant['relevant_columns'],
-        alias=metric_info_qdrant['alias']
+        # 2026-10-14：统一成 list，避免下游提示词/逻辑拿到 JSON 字符串
+        relevant_columns=_as_str_list(metric_info_qdrant['relevant_columns']),
+        alias=_as_str_list(metric_info_qdrant['alias'])
 
     )
 
