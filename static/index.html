@@ -1098,9 +1098,13 @@ function pickChart(data) {
   const cols = Object.keys(data[0]);
   if (typeof data[0] !== 'object') return null;
   const numCols = cols.filter(c => data.every(r => isNum(r[c])));
-  const labelCols = cols.filter(c => !numCols.includes(c));
-  if (!numCols.length || !labelCols.length) return null;
-  const label = labelCols[0], values = numCols;
+  let labelCols = cols.filter(c => !numCols.includes(c));
+  if (!numCols.length) return null;
+  // 数字型字符串（如月份 202501）会被 isNum 误判为数值列：此时留第一列作类目轴，避免不画图
+  if (!labelCols.length) { labelCols = [cols[0]]; }
+  const label = labelCols[0];
+  const values = numCols.filter(c => c !== label);
+  if (!values.length) return null;
   const labels = data.map(r => String(r[label]));
   const dateish = /(年|月|季|周|日|\d{4}|\d{6}|Q[1-4])/i;
   if (labels.some(l => dateish.test(l)) && data.length > 2) return { type: 'line', label, values };

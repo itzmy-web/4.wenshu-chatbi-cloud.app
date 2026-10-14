@@ -201,13 +201,17 @@ function pickChart(data) {
   if (!Array.isArray(data) || data.length < 2 || data.length > 200) return null;
   const cols = Object.keys(data[0]);
   const numCols = cols.filter(c => data.every(r => isNum(r[c])));
-  const labelCols = cols.filter(c => !numCols.includes(c));
-  if (!numCols.length || !labelCols.length) return null;
+  let labelCols = cols.filter(c => !numCols.includes(c));
+  if (!numCols.length) return null;
+  // 数字型字符串（如月份 202501）会被 isNum 误判为数值列：此时留第一列作类目轴，避免不画图
+  if (!labelCols.length) { labelCols = [cols[0]]; }
   const labels = data.map(r => String(r[labelCols[0]]));
+  const metricCols = numCols.filter(c => c !== labelCols[0]);
+  if (!metricCols.length) return null;
   const dateish = /(年|月|季|周|日|\d{4}|\d{6}|Q[1-4])/i;
-  if (labels.some(l => dateish.test(l)) && data.length > 2) return { type:'line', label:labelCols[0], values:numCols };
-  if (data.length <= 6 && numCols.length === 1) return { type:'pie', label:labelCols[0], values:numCols };
-  return { type:'bar', label:labelCols[0], values:numCols };
+  if (labels.some(l => dateish.test(l)) && data.length > 2) return { type:'line', label:labelCols[0], values:metricCols };
+  if (data.length <= 6 && metricCols.length === 1) return { type:'pie', label:labelCols[0], values:metricCols };
+  return { type:'bar', label:labelCols[0], values:metricCols };
 }
 
 function drawChart(div, data) {
