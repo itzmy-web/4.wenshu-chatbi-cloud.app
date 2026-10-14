@@ -54,3 +54,5 @@ class DataAgentState(TypedDict):
     result: list  # SQL 执行结果（行字典列表），供洞察节点使用
     insight: str  # AI 洞察一句话结论
     error: str  # 错误信息，根据state中是否存在错误信息，可以进行流程执行
+    empty_retry_done: bool  # 空结果守卫：本次会话是否已回炉纠错过（防死循环）
+    empty_retry_pending: bool  # 空结果守卫：本次执行结果为空且需要回炉纠错

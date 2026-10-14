@@ -64,7 +64,13 @@ graph_builder.add_conditional_edges(
     {"correct_sql": "correct_sql", "execute_sql": "execute_sql"},
 )
 graph_builder.add_edge("correct_sql", "execute_sql")
-graph_builder.add_edge("execute_sql", "insight")
+
+# 处理条件边：执行结果为空且尚未回炉纠错过 → 回炉 correct_sql 一次；否则进入 AI 洞察
+graph_builder.add_conditional_edges(
+    "execute_sql",
+    lambda state: "correct_sql" if state.get("empty_retry_pending") else "insight",
+    {"correct_sql": "correct_sql", "insight": "insight"},
+)
 graph_builder.add_edge("insight", END)
 
 # 编译图

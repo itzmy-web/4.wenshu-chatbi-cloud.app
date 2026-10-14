@@ -97,7 +97,7 @@ async def upload_page():
 # 构建标记（2026-10-14 新增）：用于判断线上进程是否已加载最新代码。
 # 背景：部署复用沙箱时，若旧 uvicorn 进程未重启，磁盘新代码不会生效（stale process）。
 # 用法：curl <host>/api/_build —— 值应与仓库最新提交说明一致。
-BUILD_MARK = "2026-10-14-merge-metric-expand"
+BUILD_MARK = "2026-10-14-empty-result-guard"
 
 
 @app.get("/api/_build")
