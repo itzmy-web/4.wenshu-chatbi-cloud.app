@@ -670,7 +670,10 @@ const chipsBox = document.getElementById('chips');
 const loginBox = document.getElementById('login');
 let busy = false;
 // 每次打开项目必须先登录：token 只存在内存中，不持久化（刷新/重开都要重新登录）
-let token = sessionStorage.getItem('wenshu_token') || localStorage.getItem('wenshu_token') || '';
+// 与页面底部门禁保持一致：仅 ?from=sub（看板等子页跳回）才恢复既有 token
+let token = (new URLSearchParams(location.search).get('from') === 'sub'
+  ? (sessionStorage.getItem('wenshu_token') || localStorage.getItem('wenshu_token') || '')
+  : '');
 
 /* ---------- 登录逻辑 ---------- */
 function showLogin() { loginBox.classList.add('show'); }
