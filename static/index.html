@@ -979,7 +979,7 @@ function shareCard(q, data, insight) {
     wrapText(x, insight, 40, y + 64, 670, 26);
   }
   x.fillStyle = '#a6a9c4'; x.font = '15px "Microsoft YaHei"'; x.textAlign = 'center';
-  x.fillText('wenshu-chatbi.app.workbuddy.host · 用一句话查数仓', 375, H - 28);
+  x.fillText('溯元 · 用一句话查数仓', 375, H - 28);
   x.textAlign = 'left';
   c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = '溯元分享卡片.png'; a.click(); URL.revokeObjectURL(a.href); });
 }

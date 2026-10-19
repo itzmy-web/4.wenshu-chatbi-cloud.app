@@ -7,8 +7,8 @@
  *   - 聊天面板：快捷提问 + 输入框（本地规则问答，不依赖 LLM）
  * ============================================================ */
 (function () {
-  if (window.__wenshuCat) return;
-  window.__wenshuCat = 1;
+  if (window.__suyuanCat) return;
+  window.__suyuanCat = 1;
 
   /* ---------- CSS（复刻原版，颜色写死避免依赖宿主变量） ---------- */
   var css = ''

@@ -25,7 +25,7 @@ import hashlib
 
 def _load_or_create_token() -> str:
     auth = app_config.auth
-    basis = f"wenshu::chatbi::{auth.username}::{auth.password}"
+    basis = f"suyuan::chatbi::{auth.username}::{auth.password}"
     return hashlib.sha256(basis.encode("utf-8")).hexdigest()[:32]
 
 
