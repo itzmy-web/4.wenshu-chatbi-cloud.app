@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>问数 ChatBI · 每日报告</title>
+<title>溯元 · 每日报告</title>
 <script src="/static/echarts.min.js"></script>
 <style>
   :root { --bg:#f4f5fb; --panel:#ffffff; --line:#e4e6f4; --text:#2b2b40; --muted:#8b8fa8; --accent:#7c3aed; --accent2:#6366f1; }
@@ -129,22 +129,22 @@
 <aside class="sidebar">
   <div class="sb-brand">
     <div class="sb-logo">📊</div>
-    <div><h1>问数 ChatBI</h1><p>WENSHU · AI 问数</p></div>
+    <div><h1>溯元</h1><p>SUYUAN · AI 问数</p></div>
   </div>
   <nav class="sb-menu">
-    <div class="sb-item" onclick="location.href='/'"><span class="ic">💬</span><span class="txt">问数对话</span></div>
-    <div class="sb-item" onclick="location.href='/dashboard.html'"><span class="ic">🖥</span><span class="txt">问数看板</span></div>
+    <div class="sb-item" onclick="location.href='/'"><span class="ic">💬</span><span class="txt">溯元对话</span></div>
+    <div class="sb-item" onclick="location.href='/dashboard.html'"><span class="ic">🖥</span><span class="txt">溯元看板</span></div>
     <div class="sb-item" onclick="location.href='/dictionary.html'"><span class="ic">📚</span><span class="txt">数据字典</span></div>
     <div class="sb-item on" onclick="location.href='/report.html'"><span class="ic">📈</span><span class="txt">每日报告</span></div>
     <div class="sb-item" onclick="location.href='/upload.html'"><span class="ic">⬆</span><span class="txt">上传数据</span></div>
     <div class="sb-item" onclick="location.href='/records.html'"><span class="ic">🕘</span><span class="txt">查询记录</span><span class="sb-badge" id="badge-hist">0</span></div>
     <div class="sb-item" onclick="location.href='/favorites.html'"><span class="ic">⭐</span><span class="txt">收藏问法</span><span class="sb-badge" id="badge-fav">0</span></div>
   </nav>
-  <div class="sb-foot">问数 ChatBI · AI 问数助手<br>一句话直达数仓</div>
+  <div class="sb-foot">溯元 · AI 溯元助手<br>一句话直达数仓</div>
 </aside>
 <div class="main-col">
 <div class="topbar" style="margin:0 0 16px">
-  <div class="tb-crumb"><b>问数平台</b>统一智能问数体系</div>
+  <div class="tb-crumb"><b>溯元</b>统一智能问数体系</div>
   <div class="tb-right">
     <span class="tb-bell">🔔</span>
     <span class="tb-user"><span class="tb-avatar">👤</span><span class="tb-name">企业级 SaaS</span></span>
@@ -152,10 +152,10 @@
 </div>
 
 <header>
-  <div><h1>每日报告</h1><div class="sub">核心指标 + 趋势图，每天 09:00 由问数 Agent 自动重新生成</div></div>
+  <div><h1>每日报告</h1><div class="sub">核心指标 + 趋势图，每天 09:00 由溯元 Agent 自动重新生成</div></div>
   <div class="meta">
     <span id="genbtn" onclick="regen()">立即重新生成</span>
-    <span onclick="load()">🔄 刷新</span><span onclick="location.href='/'">💬 返回问数</span>
+    <span onclick="load()">🔄 刷新</span><span onclick="location.href='/'">💬 返回溯元</span>
   </div>
 </header>
 <div id="content"><div class="empty">加载中…</div></div>
@@ -267,7 +267,7 @@ function render(report) {
     html += `<div class="chart-card"><h2>${esc(c.label)}</h2><div class="chart" id="chart-${esc(c.key)}"></div>
              <div class="ins">${esc(c.insight||'')}</div></div>`;
   }
-  html += `</div><div class="foot">报告生成时间：${esc(report.generated_at||'—')} · 数据来自问数 Agent 实时查询</div>`;
+  html += `</div><div class="foot">报告生成时间：${esc(report.generated_at||'—')} · 数据来自溯元 Agent 实时查询</div>`;
   el.innerHTML = html;
   for (const c of charts) {
     const div = document.getElementById('chart-' + c.key);

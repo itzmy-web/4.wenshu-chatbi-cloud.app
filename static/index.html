@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>问数 ChatBI</title>
+<title>溯元</title>
 <style>
   :root {
     --bg: #f4f5fb; --panel: #ffffff; --panel2: #f7f7fd; --line: #e4e6f4;
@@ -388,8 +388,8 @@
         <div class="name">企业级 SaaS</div>
       </div>
       <div class="hero-main">
-        <h1>问数平台</h1>
-        <div class="sub">自然语言数据查询与分析平台</div>
+        <h1>溯元</h1>
+        <div class="sub">溯源指标，直达数据本源 · 自然语言数据查询与分析平台</div>
         <div class="hero-chips">
           <span class="hero-chip hot" onclick="showFeat('input')">输入问题</span>
           <span class="hero-chip" onclick="showFeat('auto')">自动查询</span>
@@ -401,7 +401,7 @@
   <div class="login-pane">
     <div class="login-card" id="logincard">
       <h2>欢迎登录</h2>
-      <div class="sub">手机验证码 / 微信 / 支付宝 扫码登录 · 登录后进入问数工作台</div>
+      <div class="sub">手机验证码 / 微信 / 支付宝 扫码登录 · 登录后进入溯元工作台</div>
       <div class="tabs">
         <div class="tab on" data-form="code" onclick="switchTab(this)">📱 手机号</div>
         <div class="tab" data-form="wechat" onclick="switchTab(this)">💬 微信</div>
@@ -447,13 +447,13 @@
   <div class="sb-brand">
     <div class="sb-logo">📊</div>
     <div>
-      <h1>问数 ChatBI</h1>
-      <p>NL2SQL 问数 AGENT</p>
+      <h1>溯元</h1>
+      <p>NL2SQL 溯元 AGENT</p>
     </div>
   </div>
   <nav class="sb-menu">
-    <div class="sb-item on"><span class="ic">💬</span><span class="txt">问数对话</span></div>
-    <div class="sb-item" onclick="location.href='/dashboard.html'"><span class="ic">🖥</span><span class="txt">问数看板</span></div>
+    <div class="sb-item on"><span class="ic">💬</span><span class="txt">溯元对话</span></div>
+    <div class="sb-item" onclick="location.href='/dashboard.html'"><span class="ic">🖥</span><span class="txt">溯元看板</span></div>
     <div class="sb-item" onclick="location.href='/dictionary.html'"><span class="ic">📚</span><span class="txt">数据字典</span></div>
     <div class="sb-item" onclick="location.href='/report.html'"><span class="ic">📈</span><span class="txt">每日报告</span></div>
     <div class="sb-item" onclick="location.href='/upload.html'"><span class="ic">⬆</span><span class="txt">上传数据</span></div>
@@ -468,7 +468,7 @@
 <div class="main-col">
 
 <div class="topbar">
-  <div class="tb-crumb"><b>问数平台</b>统一智能问数体系</div>
+  <div class="tb-crumb"><b>溯元</b>统一智能问数体系</div>
   <div class="tb-right">
     <span class="tb-bell">🔔</span>
     <span class="tb-user"><span class="tb-avatar">👤</span><span class="tb-name">企业级 SaaS</span></span>
@@ -918,7 +918,7 @@ function toggleFav(q, btn) {
 function toggleDash(q) {
   const list = loadLS('wenshu_dash'); const i = list.findIndex(x => x.q === q);
   if (i >= 0) { list.splice(i, 1); }
-  else { list.push({ q, t: Date.now() }); alert('已加到问数看板，打开「🖥 问数看板」即可看到'); }
+  else { list.push({ q, t: Date.now() }); alert('已加到溯元看板，打开「🖥 溯元看板」即可看到'); }
   saveLS('wenshu_dash', list);
   if (i >= 0) location.reload();
 }
@@ -930,7 +930,7 @@ function exportCSV(data) {
   const csv = '\ufeff' + cols.join(',') + '\n' + data.map(r => cols.map(c => qcell(r[c])).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `问数结果_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+  a.download = `溯元结果_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
   URL.revokeObjectURL(a.href);
 }
 
@@ -955,7 +955,7 @@ function shareCard(q, data, insight) {
   x.fillStyle = g; x.fillRect(0, 0, 750, H);
   x.strokeStyle = '#c9c6ee'; x.strokeRect(6, 6, 738, H - 12);
   x.fillStyle = '#7c3aed'; x.font = 'bold 30px "Microsoft YaHei"';
-  x.fillText('📊 问数 ChatBI', 40, 70);
+  x.fillText('📊 溯元', 40, 70);
   x.fillStyle = '#8b8fa8'; x.font = '16px "Microsoft YaHei"';
   x.fillText(new Date().toLocaleString('zh-CN'), 40, 100);
   x.fillStyle = '#2b2b40'; x.font = 'bold 24px "Microsoft YaHei"';
@@ -981,7 +981,7 @@ function shareCard(q, data, insight) {
   x.fillStyle = '#a6a9c4'; x.font = '15px "Microsoft YaHei"'; x.textAlign = 'center';
   x.fillText('wenshu-chatbi.app.workbuddy.host · 用一句话查数仓', 375, H - 28);
   x.textAlign = 'left';
-  c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = '问数分享卡片.png'; a.click(); URL.revokeObjectURL(a.href); });
+  c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = '溯元分享卡片.png'; a.click(); URL.revokeObjectURL(a.href); });
 }
 
 /* ---------- 结果操作区 ---------- */
@@ -999,7 +999,7 @@ function addActions(body, q, data, insight) {
     b.onclick = (e) => fn(e.currentTarget); row.appendChild(b);
   }
   body.appendChild(row);
-  // 执行过程详情：关键词 / 命中表 / SQL（问数 Agent 的中间产物全透明）
+  // 执行过程详情：关键词 / 命中表 / SQL（溯元 Agent 的中间产物全透明）
   const d = document.createElement('details'); d.className = 'sqlbox';
   let inner = '';
   if (currentKeywords.length) inner += `<div class="kv"><b>提取关键词：</b>${currentKeywords.map(k => esc(k)).join('、')}</div>`;
@@ -1304,7 +1304,7 @@ else {
 const FEATS = {
   input: {
     ico: '💬', tag: '核心能力', title: '输入问题',
-    desc: '用一句中文描述你想查的数据，不用写任何 SQL。问数 Agent 自动理解你的意图，把自然语言翻译成数仓查询，查完还把结果整理成表格给你。',
+    desc: '用一句中文描述你想查的数据，不用写任何 SQL。溯元 Agent 自动理解你的意图，把自然语言翻译成数仓查询，查完还把结果整理成表格给你。',
     egTitle: '示例问法（登录后直接照着问）',
     egs: [
       ['统计2025年各地区销售总额', '按地区汇总 → 表格 + 柱状图'],
@@ -1314,7 +1314,7 @@ const FEATS = {
   },
   auto: {
     ico: '⚙', tag: '12 节点 Agent', title: '自动查询',
-    desc: '点「发送」后，问数 Agent 自动跑完整条链路：提取关键词 → 召回表结构 / 指标 / 字段取值 → 过滤锁定数据表 → 生成 SQL → 校验 → 执行 → AI 洞察。全程透明可视化，每一步都看得到。',
+    desc: '点「发送」后，溯元 Agent 自动跑完整条链路：提取关键词 → 召回表结构 / 指标 / 字段取值 → 过滤锁定数据表 → 生成 SQL → 校验 → 执行 → AI 洞察。全程透明可视化，每一步都看得到。',
     egTitle: '一次真实执行的中间过程',
     egs: [
       ['🔑 提取关键词', '"总销售额" → 命中指标 GMV'],

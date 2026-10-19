@@ -1,7 +1,7 @@
 [project]
 name = "data-agent-cloud"
 version = "0.1.0"
-description = "NL2SQL 问数 ChatBI（云端自包含版：SQLite + 内置词汇向量）"
+description = "溯元 · 对话式BI平台（云端自包含版：SQLite + 内置词汇向量）"
 requires-python = ">=3.11"
 dependencies = [
     "aiosqlite>=0.20.0",
